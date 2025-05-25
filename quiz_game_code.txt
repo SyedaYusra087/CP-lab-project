@@ -1,0 +1,192 @@
+
+#include <iostream>
+#include <string>
+#include <windows.h>
+#include <fstream>
+#include <vector>
+#include <algorithm>
+#include <random>
+#include <limits>
+
+using namespace std;
+
+struct Question {
+    string questiontext;
+    string optionA;
+    string optionB;
+    string optionC;
+    string optionD;
+    string correctoption;
+
+    void displayQuestion() {
+        cout << questiontext << endl;
+        cout << " A. " << optionA << endl;
+        cout << " B. " << optionB << endl;
+        cout << " C. " << optionC << endl;
+        cout << " D. " << optionD << endl;
+    }
+};
+
+class Quizgame {
+private:
+    vector<Question> ListOfQuestion;
+    int score;
+    int numberOfQuestionsAsked;
+
+public:
+    Quizgame() {
+        score = 0;
+        numberOfQuestionsAsked = 0;
+        fileload();
+    }
+
+    void fileload() {
+        ListOfQuestion.clear();
+        ifstream fin("question.txt");
+        Question ques;
+
+        if (fin.is_open()) {
+            while (getline(fin, ques.questiontext)) {
+                getline(fin, ques.optionA);
+                getline(fin, ques.optionB);
+                getline(fin, ques.optionC);
+                getline(fin, ques.optionD);
+                getline(fin, ques.correctoption);
+                ListOfQuestion.push_back(ques);
+            }
+
+            random_device rd;
+            mt19937 g(rd());
+            shuffle(ListOfQuestion.begin(), ListOfQuestion.end(), g);
+            fin.close();
+        } else {
+            cout << "File not found." << endl;
+        }
+    }
+
+    void StartQuiz(int numberOfQuestions = 10) {
+        numberOfQuestionsAsked = numberOfQuestions;
+        int count = 0;
+
+        for (auto& Q : ListOfQuestion) {
+            if (count >= numberOfQuestions) break;
+            Q.displayQuestion();
+            string answer;
+            cout << "Enter your answer: ";
+            getline(cin, answer);
+
+            if (!answer.empty() && toupper(answer[0]) == toupper(Q.correctoption[0])) {
+                score++;
+                cout << "Correct answer!" << endl;
+            } else {
+                cout << "Wrong answer!" << endl;
+            }
+            count++;
+        }
+    }
+
+    void displayresult() {
+        system("cls");
+        cout << "Total Score: " << score << "/" << numberOfQuestionsAsked << endl;
+    }
+
+    int getScore() {
+        return score;
+    }
+};
+
+void saveHighScore(string name, int score) {
+    ifstream fin("highscore.txt");
+    string highScorer;
+    int highScore = 0;
+
+    if (fin.is_open()) {
+        fin >> highScore;
+        fin.ignore();
+        getline(fin, highScorer);
+        fin.close();
+    }
+
+    if (score > highScore) {
+        ofstream fout("highscore.txt");
+        fout << score << endl << name;
+        fout.close();
+    }
+}
+
+void displayHighScore() {
+    ifstream fin("highscore.txt");
+    string name;
+    int score;
+
+    if (fin.is_open()) {
+        fin >> score;
+        fin.ignore();
+        getline(fin, name);
+        cout << "
+
+===== Highest Score =====" << endl;
+        cout << "Name : " << name << endl;
+        cout << "Score : " << score << endl;
+        cout << "=========================
+" << endl;
+        fin.close();
+    } else {
+        cout << "
+No high score found yet.
+" << endl;
+    }
+}
+
+int main() {
+    char choice;
+    string name;
+    int Enrollment;
+
+    do {
+        cout << "
+
+		************" << endl;
+        cout << "		 Quiz Game " << endl;
+        cout << "		************" << endl;
+        cout << "1. Play Quiz
+2. View High Score
+3. Exit
+";
+        cout << "Enter your choice: ";
+        cin >> choice;
+        cin.ignore(numeric_limits<streamsize>::max(), '
+');
+
+        if (choice == '1') {
+            cout << "		 Enter Your Name: ";
+            getline(cin, name);
+            cout << "		 Enter Your Enrollment: ";
+            cin >> Enrollment;
+            cin.ignore();
+
+            Quizgame qa;
+            qa.StartQuiz(10);
+            qa.displayresult();
+            saveHighScore(name, qa.getScore());
+        }
+        else if (choice == '2') {
+            displayHighScore();
+        }
+        else if (choice == '3') {
+            cout << "Thanks for playing!" << endl;
+            break;
+        }
+        else {
+            cout << "Invalid choice. Try again." << endl;
+        }
+
+        cout << "Press 'Y' or 'y' to go back to menu, or any other key to exit: ";
+        cin >> choice;
+        cin.ignore(numeric_limits<streamsize>::max(), '
+');
+
+    } while (choice == 'y' || choice == 'Y');
+
+    return 0;
+}
